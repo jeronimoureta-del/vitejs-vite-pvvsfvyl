@@ -63,15 +63,40 @@ function Tag({children,color=navy,bg="#EEF3FA",brd="1px solid #C5D5EC"}){
 
 // ── MAIN APP ──
 export default function UInvest(){
-  const [page,setPage]=useState("welcome"); // welcome|onboard|dashboard
+  // Load from localStorage on init
+  const savedUser = (() => { try { const u=localStorage.getItem('uinvest_user'); return u?JSON.parse(u):null; } catch{return null;} })();
+  const savedPositions = (() => { try { const p=localStorage.getItem('uinvest_positions'); return p?JSON.parse(p):[]; } catch{return [];} })();
+
+  const [page,setPage]=useState(savedUser?"dashboard":"welcome");
   const [dbPage,setDbPage]=useState("dashboard");
-  const [user,setUser]=useState({nombre:"",perfil:"Moderado",moneda:"ARS/USD"});
-  const [positions,setPositions]=useState([]);
-  const [modal,setModal]=useState(null); // null | {type:"fondo"|"add"|"edit", data}
+  const [user,setUser]=useState(savedUser||{nombre:"",perfil:"Moderado",moneda:"ARS/USD"});
+  const [positions,setPositions]=useState(savedPositions);
+  const [modal,setModal]=useState(null);
   const [obStep,setObStep]=useState(0);
   const [obData,setObData]=useState({nombre:"",apellido:"",email:"",pass:"",perfil:"",moneda:"",qAnswers:[]});
   const [loginData,setLoginData]=useState({email:"",pass:""});
   const [loginErr,setLoginErr]=useState(false);
+
+  // Persist user to localStorage
+  const handleSetUser = (u) => {
+    setUser(u);
+    try { localStorage.setItem('uinvest_user', JSON.stringify(u)); } catch{}
+  };
+
+  // Persist positions to localStorage
+  const handleSetPositions = (p) => {
+    const newPos = typeof p === 'function' ? p(positions) : p;
+    setPositions(newPos);
+    try { localStorage.setItem('uinvest_positions', JSON.stringify(newPos)); } catch{}
+  };
+
+  // Logout clears localStorage
+  const handleLogout = () => {
+    try { localStorage.removeItem('uinvest_user'); localStorage.removeItem('uinvest_positions'); } catch{}
+    setPage("welcome");
+    setPositions([]);
+    setUser({nombre:"",perfil:"Moderado",moneda:"ARS/USD"});
+  };
 
   const pages = [
     {id:"dashboard",icon:"⊞",label:"Dashboard"},
@@ -83,8 +108,8 @@ export default function UInvest(){
   ];
 
   if(page==="welcome") return <Welcome onRegister={()=>setPage("onboard")} onLogin={()=>setPage("login")} />;
-  if(page==="login") return <Login loginData={loginData} setLoginData={setLoginData} err={loginErr} onLogin={(u)=>{setUser(u);setPage("dashboard");setLoginErr(false);}} onBack={()=>setPage("welcome")} setErr={setLoginErr}/>;
-  if(page==="onboard") return <Onboard step={obStep} setStep={setObStep} data={obData} setData={setObData} onDone={(u)=>{setUser(u);setPage("dashboard");}}/>;
+  if(page==="login") return <Login loginData={loginData} setLoginData={setLoginData} err={loginErr} onLogin={(u)=>{handleSetUser(u);setPage("dashboard");setLoginErr(false);}} onBack={()=>setPage("welcome")} setErr={setLoginErr}/>;
+  if(page==="onboard") return <Onboard step={obStep} setStep={setObStep} data={obData} setData={setObData} onDone={(u)=>{handleSetUser(u);setPage("dashboard");}}/>;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -114,7 +139,7 @@ export default function UInvest(){
         {pages.map(p=><SBItem key={p.id} icon={p.icon} label={p.label} badge={p.badge} active={dbPage===p.id} onClick={()=>{setDbPage(p.id);setSidebarOpen(false);}}/>)}
       </div>
       <div style={{padding:"10px",borderTop:"1px solid rgba(255,255,255,.08)"}}>
-        <SBItem icon="🚪" label="Cerrar sesión" onClick={()=>{setPage("welcome");setPositions([]);setSidebarOpen(false);}}/>
+        <SBItem icon="🚪" label="Cerrar sesión" onClick={handleLogout}/>
       </div>
     </nav>
 
@@ -132,10 +157,10 @@ export default function UInvest(){
       <div style={S.content}>
         {dbPage==="dashboard"&&<Dashboard user={user} positions={positions} setModal={setModal} setDbPage={setDbPage}/>}
         {dbPage==="recomendacion"&&<Recomendacion user={user} positions={positions} setModal={setModal}/>}
-        {dbPage==="cartera"&&<Cartera user={user} positions={positions} setPositions={setPositions} setModal={setModal}/>}
+        {dbPage==="cartera"&&<Cartera user={user} positions={positions} setPositions={handleSetPositions} setModal={setModal}/>}
         {dbPage==="fondos"&&<Fondos setModal={setModal}/>}
         {dbPage==="macro"&&<Macro positions={positions}/>}
-        {dbPage==="perfil"&&<Perfil user={user} setUser={setUser} positions={positions}/>}
+        {dbPage==="perfil"&&<Perfil user={user} setUser={handleSetUser} positions={positions}/>}
       </div>
     </div>
 
@@ -201,7 +226,20 @@ function Login({loginData,setLoginData,err,onLogin,onBack,setErr}){
   const doLogin=()=>{
     const u=demos.find(d=>d.email===loginData.email&&d.pass===loginData.pass);
     if(u){onLogin(u);return;}
-    if(loginData.email&&loginData.pass.length>=4){const n=loginData.email.split("@")[0];onLogin({nombre:n,apellido:"",perfil:"Moderado",moneda:"ARS/USD"});return;}
+    if(loginData.email&&loginData.pass.length>=4){
+      // Save custom user credentials
+      try {
+        const saved = JSON.parse(localStorage.getItem('uinvest_accounts')||'[]');
+        const existing = saved.find(a=>a.email===loginData.email);
+        if(existing && existing.pass!==loginData.pass){setErr(true);return;}
+        if(!existing) saved.push({email:loginData.email,pass:loginData.pass});
+        localStorage.setItem('uinvest_accounts',JSON.stringify(saved));
+      } catch{}
+      const n=loginData.email.split("@")[0];
+      const nombre=n.charAt(0).toUpperCase()+n.slice(1);
+      onLogin({nombre,apellido:"",perfil:"Moderado",moneda:"ARS/USD",email:loginData.email});
+      return;
+    }
     setErr(true);
   };
   return <div style={{display:"flex",minHeight:"100vh",alignItems:"center",justifyContent:"center",background:cream,padding:20}}>
