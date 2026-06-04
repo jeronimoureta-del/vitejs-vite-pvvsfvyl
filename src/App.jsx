@@ -22,21 +22,22 @@ const fmt = (n) => Math.round(n).toLocaleString("es-AR");
 const navy="#0B1F3A",gold="#C9A84C",cream="#FAF8F3",border="#E4DDD2",green="#1A7A5E",red="#A83232",amber="#A86820";
 
 // ── STYLES ──
+const isMob = () => window.innerWidth < 768;
 const S = {
   app:{fontFamily:"'DM Sans',sans-serif",background:cream,minHeight:"100vh",color:navy},
-  sidebar:{width:220,background:navy,position:"fixed",top:0,left:0,bottom:0,display:"flex",flexDirection:"column",zIndex:100},
-  main:{marginLeft:220,minHeight:"100vh",display:"flex",flexDirection:"column"},
-  topbar:{background:"#fff",borderBottom:`1px solid ${border}`,padding:"0 20px",height:50,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50},
-  content:{padding:"20px 22px",flex:1},
-  card:{background:"#fff",borderRadius:16,border:`1px solid ${border}`,boxShadow:"0 2px 16px rgba(11,31,58,.07)",padding:"18px 20px",marginBottom:14},
-  kpiGrid:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16},
-  kpi:{background:"#fff",borderRadius:12,border:`1px solid ${border}`,padding:"14px 16px",position:"relative",overflow:"hidden"},
+  sidebar:{width:220,background:navy,position:"fixed",top:0,left:0,bottom:0,display:"flex",flexDirection:"column",zIndex:200,transition:"transform .3s"},
+  main:{marginLeft:0,minHeight:"100vh",display:"flex",flexDirection:"column"},
+  topbar:{background:"#fff",borderBottom:`1px solid ${border}`,padding:"0 14px",height:50,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100},
+  content:{padding:"14px",flex:1},
+  card:{background:"#fff",borderRadius:14,border:`1px solid ${border}`,boxShadow:"0 2px 12px rgba(11,31,58,.06)",padding:"14px 16px",marginBottom:12},
+  kpiGrid:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:14},
+  kpi:{background:"#fff",borderRadius:12,border:`1px solid ${border}`,padding:"12px 14px",position:"relative",overflow:"hidden"},
   pill:{display:"inline-block",fontSize:10,padding:"2px 8px",borderRadius:20,fontWeight:600},
   btn:{border:"none",borderRadius:9,padding:"9px 16px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"},
   input:{width:"100%",padding:"10px 12px",border:`1.5px solid ${border}`,borderRadius:9,fontSize:13,fontFamily:"'DM Sans',sans-serif",color:navy,outline:"none",boxSizing:"border-box"},
   select:{width:"100%",padding:"10px 12px",border:`1.5px solid ${border}`,borderRadius:9,fontSize:13,fontFamily:"'DM Sans',sans-serif",color:navy,outline:"none",background:"#fff",boxSizing:"border-box"},
-  modal:{position:"fixed",inset:0,background:"rgba(11,31,58,.55)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16},
-  modalBox:{background:"#fff",borderRadius:20,width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 8px 40px rgba(11,31,58,.2)"},
+  modal:{position:"fixed",inset:0,background:"rgba(11,31,58,.55)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center"},
+  modalBox:{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:560,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 -4px 40px rgba(11,31,58,.2)"},
 };
 
 // ── COMPONENTS ──
@@ -85,87 +86,111 @@ export default function UInvest(){
   if(page==="login") return <Login loginData={loginData} setLoginData={setLoginData} err={loginErr} onLogin={(u)=>{setUser(u);setPage("dashboard");setLoginErr(false);}} onBack={()=>setPage("welcome")} setErr={setLoginErr}/>;
   if(page==="onboard") return <Onboard step={obStep} setStep={setObStep} data={obData} setData={setObData} onDone={(u)=>{setUser(u);setPage("dashboard");}}/>;
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return <div style={S.app}>
     {modal&&<Modal modal={modal} setModal={setModal} positions={positions} setPositions={setPositions} user={user}/>}
-    <div style={{display:"flex"}}>
-      <nav style={S.sidebar}>
-        <div style={{padding:"22px 16px 16px",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:18}}>
+
+    {/* Sidebar overlay for mobile */}
+    {sidebarOpen&&<div onClick={()=>setSidebarOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:150}}/>}
+
+    {/* Sidebar */}
+    <nav style={{...S.sidebar,transform:sidebarOpen?"translateX(0)":"translateX(-100%)"}}>
+      <div style={{padding:"22px 16px 16px",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
+          <div style={{display:"flex",alignItems:"center",gap:9}}>
             <div style={{width:30,height:30,borderRadius:8,background:gold,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>📈</div>
             <span style={{fontFamily:"Georgia,serif",fontSize:18,color:"#fff",fontWeight:500}}>U-Invest</span>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:9,background:"rgba(255,255,255,.06)",borderRadius:9,padding:"8px 10px"}}>
-            <div style={{width:28,height:28,borderRadius:"50%",background:gold,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Georgia,serif",fontSize:13,fontWeight:600,color:navy}}>{user.nombre[0]||"U"}</div>
-            <div><div style={{fontSize:12,color:"#fff",fontWeight:500}}>{user.nombre} {user.apellido||""}</div><div style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>{user.perfil} · {user.moneda}</div></div>
-          </div>
+          <button onClick={()=>setSidebarOpen(false)} style={{background:"rgba(255,255,255,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",color:"rgba(255,255,255,.7)",fontSize:16}}>✕</button>
         </div>
-        <div style={{flex:1,padding:"12px 10px",overflowY:"auto"}}>
-          <div style={{fontSize:9,color:"rgba(255,255,255,.28)",textTransform:"uppercase",letterSpacing:".14em",padding:"12px 8px 5px"}}>Principal</div>
-          {pages.map(p=><SBItem key={p.id} icon={p.icon} label={p.label} badge={p.badge} active={dbPage===p.id} onClick={()=>setDbPage(p.id)}/>)}
-        </div>
-        <div style={{padding:"10px",borderTop:"1px solid rgba(255,255,255,.08)"}}>
-          <SBItem icon="🚪" label="Cerrar sesión" onClick={()=>{setPage("welcome");setPositions([]);}}/>
-        </div>
-      </nav>
-      <div style={S.main}>
-        <div style={S.topbar}>
-          <span style={{fontSize:14,fontWeight:600}}>{pages.find(p=>p.id===dbPage)?.label||"Dashboard"}</span>
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <span style={{fontSize:11,color:"#8096B0",background:cream,border:`1px solid ${border}`,padding:"4px 10px",borderRadius:20}}>{new Date().toLocaleDateString("es-AR",{day:"numeric",month:"long",year:"numeric"})}</span>
-            <button style={{...S.btn,background:navy,color:gold,fontSize:11}} onClick={()=>setDbPage("fondos")}>🔍 Explorar fondos</button>
-          </div>
-        </div>
-        <div style={S.content}>
-          {dbPage==="dashboard"&&<Dashboard user={user} positions={positions} setModal={setModal} setDbPage={setDbPage}/>}
-          {dbPage==="recomendacion"&&<Recomendacion user={user} positions={positions} setModal={setModal}/>}
-          {dbPage==="cartera"&&<Cartera user={user} positions={positions} setPositions={setPositions} setModal={setModal}/>}
-          {dbPage==="fondos"&&<Fondos setModal={setModal}/>}
-          {dbPage==="macro"&&<Macro positions={positions}/>}
-          {dbPage==="perfil"&&<Perfil user={user} setUser={setUser} positions={positions}/>}
+        <div style={{display:"flex",alignItems:"center",gap:9,background:"rgba(255,255,255,.06)",borderRadius:9,padding:"8px 10px"}}>
+          <div style={{width:28,height:28,borderRadius:"50%",background:gold,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Georgia,serif",fontSize:13,fontWeight:600,color:navy}}>{user.nombre[0]||"U"}</div>
+          <div><div style={{fontSize:12,color:"#fff",fontWeight:500}}>{user.nombre} {user.apellido||""}</div><div style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>{user.perfil} · {user.moneda}</div></div>
         </div>
       </div>
+      <div style={{flex:1,padding:"12px 10px",overflowY:"auto"}}>
+        <div style={{fontSize:9,color:"rgba(255,255,255,.28)",textTransform:"uppercase",letterSpacing:".14em",padding:"12px 8px 5px"}}>Principal</div>
+        {pages.map(p=><SBItem key={p.id} icon={p.icon} label={p.label} badge={p.badge} active={dbPage===p.id} onClick={()=>{setDbPage(p.id);setSidebarOpen(false);}}/>)}
+      </div>
+      <div style={{padding:"10px",borderTop:"1px solid rgba(255,255,255,.08)"}}>
+        <SBItem icon="🚪" label="Cerrar sesión" onClick={()=>{setPage("welcome");setPositions([]);setSidebarOpen(false);}}/>
+      </div>
+    </nav>
+
+    {/* Main */}
+    <div style={{...S.main,paddingBottom:60}}>
+      <div style={S.topbar}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={()=>setSidebarOpen(true)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,padding:"4px",color:navy}}>☰</button>
+          <span style={{fontSize:14,fontWeight:600}}>{pages.find(p=>p.id===dbPage)?.label||"Dashboard"}</span>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <span style={{fontSize:10,color:"#8096B0",background:cream,border:`1px solid ${border}`,padding:"3px 8px",borderRadius:20,display:"none"}}>{new Date().toLocaleDateString("es-AR",{day:"numeric",month:"short"})}</span>
+        </div>
+      </div>
+      <div style={S.content}>
+        {dbPage==="dashboard"&&<Dashboard user={user} positions={positions} setModal={setModal} setDbPage={setDbPage}/>}
+        {dbPage==="recomendacion"&&<Recomendacion user={user} positions={positions} setModal={setModal}/>}
+        {dbPage==="cartera"&&<Cartera user={user} positions={positions} setPositions={setPositions} setModal={setModal}/>}
+        {dbPage==="fondos"&&<Fondos setModal={setModal}/>}
+        {dbPage==="macro"&&<Macro positions={positions}/>}
+        {dbPage==="perfil"&&<Perfil user={user} setUser={setUser} positions={positions}/>}
+      </div>
+    </div>
+
+    {/* Bottom nav for mobile */}
+    <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#fff",borderTop:`1px solid ${border}`,display:"flex",zIndex:100,height:56}}>
+      {[["⊞","dashboard"],["⭐","recomendacion"],["💼","cartera"],["📊","fondos"],["👤","perfil"]].map(([ico,id])=>
+        <div key={id} onClick={()=>setDbPage(id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,cursor:"pointer",background:dbPage===id?"#EEF3FA":"transparent",borderTop:`2px solid ${dbPage===id?navy:"transparent"}`}}>
+          <span style={{fontSize:18}}>{ico}</span>
+          <span style={{fontSize:8,color:dbPage===id?navy:"#8096B0",fontWeight:dbPage===id?600:400,textTransform:"capitalize"}}>{id==="recomendacion"?"IA":id.charAt(0).toUpperCase()+id.slice(1)}</span>
+        </div>
+      )}
     </div>
   </div>;
 }
 
 // ── WELCOME ──
 function Welcome({onRegister,onLogin}){
-  return <div style={{display:"flex",minHeight:"100vh"}}>
-    <div style={{width:380,background:navy,display:"flex",flexDirection:"column",padding:"44px 36px",position:"fixed",top:0,left:0,bottom:0}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:48}}>
-        <div style={{width:34,height:34,borderRadius:9,background:gold,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>📈</div>
-        <span style={{fontFamily:"Georgia,serif",fontSize:20,color:"#fff"}}>U-Invest</span>
-      </div>
-      <div style={{flex:1}}>
-        <h1 style={{fontFamily:"Georgia,serif",fontSize:36,fontWeight:300,color:"#fff",lineHeight:1.2,marginBottom:18}}>Tu asesor de<br/>inversiones<br/><em style={{fontStyle:"italic",color:gold}}>inteligente</em></h1>
-        <p style={{fontSize:13,color:"rgba(255,255,255,.5)",lineHeight:1.7,maxWidth:280}}>Analizamos más de 646 fondos del mercado argentino y te decimos exactamente dónde estar.</p>
-      </div>
-      {[["⭐","Recomendación personalizada","según tu perfil y contexto macro"],["⏰","Seguimiento diario","Te avisamos si hay mejor opción"],["📊","Análisis macro/micro","Inflación, TC y su impacto en tu cartera"]].map(([ico,t,s])=>
-        <div key={t} style={{display:"flex",gap:11,marginBottom:14}}>
-          <div style={{width:28,height:28,borderRadius:8,background:"rgba(201,168,76,.14)",border:"1px solid rgba(201,168,76,.24)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{ico}</div>
-          <div style={{fontSize:12,color:"rgba(255,255,255,.6)",lineHeight:1.5,paddingTop:5}}><strong style={{color:"rgba(255,255,255,.9)"}}>{t}</strong> {s}</div>
+  const isMobile = window.innerWidth < 768;
+  return <div style={{minHeight:"100vh",background:navy,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px",boxSizing:"border-box"}}>
+    {/* Logo */}
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:32}}>
+      <div style={{width:40,height:40,borderRadius:10,background:gold,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>📈</div>
+      <span style={{fontFamily:"Georgia,serif",fontSize:24,color:"#fff",fontWeight:500}}>U-Invest</span>
+    </div>
+
+    {/* Hero text */}
+    <h1 style={{fontFamily:"Georgia,serif",fontSize:isMobile?34:44,fontWeight:300,color:"#fff",lineHeight:1.2,textAlign:"center",marginBottom:14}}>
+      Tu asesor de inversiones<br/><em style={{fontStyle:"italic",color:gold}}>inteligente</em>
+    </h1>
+    <p style={{fontSize:14,color:"rgba(255,255,255,.55)",lineHeight:1.7,textAlign:"center",maxWidth:340,marginBottom:32}}>
+      Analizamos más de 646 fondos del mercado argentino y te decimos exactamente dónde invertir.
+    </p>
+
+    {/* Features */}
+    <div style={{width:"100%",maxWidth:400,marginBottom:32,display:"flex",flexDirection:"column",gap:12}}>
+      {[["⭐","Recomendación personalizada","Según tu perfil y el contexto macro actual"],["⏰","Seguimiento diario","Te avisamos si aparece una mejor opción"],["📊","Análisis macro/micro","Inflación, TC y su impacto directo en tu cartera"]].map(([ico,t,s])=>
+        <div key={t} style={{display:"flex",alignItems:"flex-start",gap:12,background:"rgba(255,255,255,.06)",borderRadius:12,padding:"12px 14px",border:"1px solid rgba(255,255,255,.1)"}}>
+          <div style={{width:32,height:32,borderRadius:8,background:"rgba(201,168,76,.2)",border:"1px solid rgba(201,168,76,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{ico}</div>
+          <div><div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:2}}>{t}</div><div style={{fontSize:12,color:"rgba(255,255,255,.5)",lineHeight:1.4}}>{s}</div></div>
         </div>
       )}
-      <div style={{marginTop:24,fontSize:11,color:"rgba(255,255,255,.22)"}}>U-Invest · Asesoramiento independiente · No ejecutamos operaciones</div>
     </div>
-    <div style={{marginLeft:380,flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:32}}>
-      <div style={{width:"100%",maxWidth:440}}>
-        <div style={{...S.card,textAlign:"center",padding:"36px 32px"}}>
-          <div style={{fontSize:40,marginBottom:14}}>📈</div>
-          <h2 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:400,marginBottom:8}}>Bienvenido a <em style={{fontStyle:"italic",color:gold}}>U-Invest</em></h2>
-          <p style={{fontSize:13,color:"#8096B0",lineHeight:1.6,marginBottom:24}}>El asesor de FCIs que analiza el mercado argentino por vos.</p>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:24}}>
-            {[["📊","646 fondos analizados"],["🎯","Recomendación IA"],["📈","Cartera vs inflación"],["🇦🇷","Contexto macro"]].map(([ico,t])=>
-              <div key={t} style={{background:cream,borderRadius:9,padding:12,border:`1px solid ${border}`,textAlign:"left"}}>
-                <div style={{fontSize:16,marginBottom:4}}>{ico}</div>
-                <div style={{fontSize:11,fontWeight:600,color:navy}}>{t}</div>
-              </div>
-            )}
-          </div>
-          <button style={{...S.btn,background:navy,color:gold,width:"100%",padding:"12px",fontSize:13,marginBottom:10}} onClick={onRegister}>Crear mi cuenta gratis →</button>
-          <div style={{fontSize:12,color:"#8096B0"}}>¿Ya tenés cuenta? <span style={{color:navy,fontWeight:600,cursor:"pointer"}} onClick={onLogin}>Iniciá sesión</span></div>
-        </div>
-      </div>
+
+    {/* Buttons */}
+    <div style={{width:"100%",maxWidth:400,display:"flex",flexDirection:"column",gap:10}}>
+      <button style={{...S.btn,background:gold,color:navy,width:"100%",padding:"14px",fontSize:15,fontWeight:700,borderRadius:12}} onClick={onRegister}>
+        Crear mi cuenta gratis →
+      </button>
+      <button style={{...S.btn,background:"rgba(255,255,255,.08)",color:"#fff",width:"100%",padding:"14px",fontSize:14,borderRadius:12,border:"1px solid rgba(255,255,255,.15)"}} onClick={onLogin}>
+        Ya tengo cuenta · Iniciar sesión
+      </button>
+    </div>
+
+    <div style={{marginTop:24,fontSize:11,color:"rgba(255,255,255,.22)",textAlign:"center"}}>
+      U-Invest · Asesoramiento independiente · No ejecutamos operaciones
     </div>
   </div>;
 }
