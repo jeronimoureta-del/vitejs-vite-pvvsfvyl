@@ -2,12 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 // ── CAFCI API ──
-const CAFCI_BASE = "https://api.cafci.org.ar";
+const CAFCI_BASE = "/.netlify/functions/cafci?path=";
 
 async function fetchFondosCAFCI() {
   try {
     // Fetch top funds with performance data
-    const res = await fetch(`${CAFCI_BASE}/fondo?limit=100&offset=0&estado=1`, {
+    const res = await fetch(`${CAFCI_BASE}fondo?limit=100&offset=0&estado=1`, {
       headers: { "Accept": "application/json" }
     });
     if (!res.ok) throw new Error("CAFCI API error");
@@ -23,7 +23,7 @@ async function fetchRendimientoCAFCI(fondoId, claseId) {
   try {
     const hoy = new Date().toISOString().split("T")[0];
     const hace30 = new Date(Date.now() - 30*24*60*60*1000).toISOString().split("T")[0];
-    const res = await fetch(`${CAFCI_BASE}/rendimiento/${fondoId}/${claseId}?fechaDesde=${hace30}&fechaHasta=${hoy}`, {
+    const res = await fetch(`${CAFCI_BASE}rendimiento/${fondoId}/${claseId}?fechaDesde=${hace30}&fechaHasta=${hoy}`, {
       headers: { "Accept": "application/json" }
     });
     if (!res.ok) return null;
@@ -266,7 +266,7 @@ function useAnalisisFondos(perfil = "Moderado") {
       setLoading(true);
       try {
         // 1. Fetch lista de fondos de CAFCI
-        const res = await fetch(`${CAFCI_BASE}/fondo?limit=100&offset=0&estado=1`, {
+        const res = await fetch(`${CAFCI_BASE}fondo?limit=100&offset=0&estado=1`, {
           headers: { Accept: "application/json" }
         });
 
@@ -303,7 +303,7 @@ function useAnalisisFondos(perfil = "Moderado") {
 
             try {
               const rRes = await fetch(
-                `${CAFCI_BASE}/rendimiento/${f.id}/${claseId}?fechaDesde=${hace30}&fechaHasta=${hoy}`,
+                `${CAFCI_BASE}rendimiento/${f.id}/${claseId}?fechaDesde=${hace30}&fechaHasta=${hoy}`,
                 { headers: { Accept: "application/json" } }
               );
               if (!rRes.ok) return null;
