@@ -1034,18 +1034,9 @@ function Recomendacion({user,positions,setModal}){
         </div>)}
       </div>
     </>}
+
   </div>;
 }
-    <div style={{background:"#fff",borderRadius:20,border:`1px solid ${border}`,overflow:"hidden",marginBottom:14}}>
-      <div style={{background:navy,padding:"20px 24px",cursor:"pointer",position:"relative",overflow:"hidden"}} onClick={()=>setModal({type:"fondo",data:FONDOS[0]})}>
-        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 40% 80% at 90% 50%,rgba(201,168,76,.12) 0%,transparent 60%)"}}/>
-        <div style={{position:"relative",zIndex:1,display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-          <div>
-            <div style={{display:"inline-flex",alignItems:"center",gap:4,background:"rgba(201,168,76,.18)",border:"1px solid rgba(201,168,76,.28)",color:gold,fontSize:9,padding:"3px 8px",borderRadius:20,textTransform:"uppercase",fontWeight:600,marginBottom:9}}>⚡ Análisis IA · 2 jun 2026</div>
-            <div style={{fontFamily:"Georgia,serif",fontSize:20,color:"#fff",marginBottom:2}}>AXIS ESTRATEGIA 12 — CLASE A</div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.45)"}}>Axis Asset Management · Renta Fija · ARS · Liquidez 1 día</div>
-          </div>
-
 // ── CARTERA ──
 function Cartera({user,positions,setPositions,setModal}){
   const [addModal,setAddModal]=useState(false);
