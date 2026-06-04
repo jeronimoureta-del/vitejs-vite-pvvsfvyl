@@ -2,19 +2,28 @@ import { useState, useEffect, useRef } from "react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 // ── CAFCI API ──
-const CAFCI_BASE = "/.netlify/functions/cafci?path=";
+const CAFCI_BASE = "https://api.cafci.org.ar";
+const PROXY = "https://api.allorigins.win/raw?url=";
+
+async function cafciFetch(url) {
+  // Try direct first, then proxy
+  try {
+    const res = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (res.ok) return await res.json();
+  } catch {}
+  try {
+    const res = await fetch(PROXY + encodeURIComponent(url));
+    if (res.ok) return await res.json();
+  } catch {}
+  return null;
+}
 
 async function fetchFondosCAFCI() {
   try {
-    // Fetch top funds with performance data
-    const res = await fetch(`${CAFCI_BASE}fondo?limit=100&offset=0&estado=1`, {
-      headers: { "Accept": "application/json" }
-    });
-    if (!res.ok) throw new Error("CAFCI API error");
-    const data = await res.json();
-    return data.data || [];
+    const data = await cafciFetch(`${CAFCI_BASE}/fondo?limit=100&offset=0&estado=1`);
+    return data?.data || [];
   } catch (e) {
-    console.warn("CAFCI API no disponible, usando datos locales:", e.message);
+    console.warn("CAFCI API no disponible:", e.message);
     return [];
   }
 }
@@ -23,12 +32,8 @@ async function fetchRendimientoCAFCI(fondoId, claseId) {
   try {
     const hoy = new Date().toISOString().split("T")[0];
     const hace30 = new Date(Date.now() - 30*24*60*60*1000).toISOString().split("T")[0];
-    const res = await fetch(`${CAFCI_BASE}rendimiento/${fondoId}/${claseId}?fechaDesde=${hace30}&fechaHasta=${hoy}`, {
-      headers: { "Accept": "application/json" }
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.data || null;
+    const data = await cafciFetch(`${CAFCI_BASE}/rendimiento/${fondoId}/${claseId}?fechaDesde=${hace30}&fechaHasta=${hoy}`);
+    return data?.data || null;
   } catch {
     return null;
   }
@@ -266,15 +271,8 @@ function useAnalisisFondos(perfil = "Moderado") {
       setLoading(true);
       try {
         // 1. Fetch lista de fondos de CAFCI
-        const res = await fetch(`${CAFCI_BASE}fondo?limit=100&offset=0&estado=1`, {
-          headers: { Accept: "application/json" }
-        });
-
-        let fondosRaw = [];
-        if (res.ok) {
-          const json = await res.json();
-          fondosRaw = json.data || [];
-        }
+        const jsonFondos = await cafciFetch(`${CAFCI_BASE}/fondo?limit=100&offset=0&estado=1`);
+        let fondosRaw = jsonFondos?.data || [];
 
         if (fondosRaw.length === 0) {
           // Fallback: usar datos locales con cálculo estimado
@@ -302,13 +300,8 @@ function useAnalisisFondos(perfil = "Moderado") {
             if (!claseId) return null;
 
             try {
-              const rRes = await fetch(
-                `${CAFCI_BASE}rendimiento/${f.id}/${claseId}?fechaDesde=${hace30}&fechaHasta=${hoy}`,
-                { headers: { Accept: "application/json" } }
-              );
-              if (!rRes.ok) return null;
-              const rJson = await rRes.json();
-              const serie = rJson.data || [];
+              const rJson = await cafciFetch(`${CAFCI_BASE}/rendimiento/${f.id}/${claseId}?fechaDesde=${hace30}&fechaHasta=${hoy}`);
+              const serie = rJson?.data || [];
               if (serie.length < 5) return null;
 
               const rendDiarios = calcRendimientosDiarios(serie);
